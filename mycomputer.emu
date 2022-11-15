@@ -11,4 +11,4 @@ serial.control 0x8000
 serial.map 1
 serial.interrupt 0
 
-terminal.caps 0
+terminal.caps 1

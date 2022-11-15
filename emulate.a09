@@ -1,7 +1,7 @@
 .engine mycomputer
 ; *************************************************************************
 ;
-;       MINT Minimal Interpreter for the 6800 
+;       MINT Minimal Interpreter for the 6809 
 ;
 ;       Ken Boak, John Hardy and Craig Jones. 
 ;
@@ -21,14 +21,20 @@ RAMSTART    .EQU $0000
         lds  #$07ff
         jsr  InitialiseSerial
 
-loop:   ldaa  #'a'
+loop    lda   #'a'
         jsr   TxChar
-loop2   ldab  #$ff
-loop1:  decb           
-        bne   loop1
-        bra   loop2
+        
+;Delay so we don't fill screen
 
-.include "Char-6850.a68"
+        lda   #$ff
+loop2   ldb   #$ff
+loop1   decb           
+        bne   loop1
+        deca
+        bne   loop2
+        bra   loop          ;Done the delay, send another char
+
+.include "Char-6850.a09"
 
         .ORG  $fffe
         .DW   PGMSTART
