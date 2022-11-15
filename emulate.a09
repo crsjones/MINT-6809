@@ -1,0 +1,35 @@
+.engine mycomputer
+; *************************************************************************
+;
+;       MINT Minimal Interpreter for the 6800 
+;
+;       Ken Boak, John Hardy and Craig Jones. 
+;
+;       GNU GENERAL PUBLIC LICENSE                   Version 3, 29 June 2007
+;
+;       see the LICENSE file in this repo for more information 
+;
+; *****************************************************************************
+
+; ASM80 emulator build
+
+PGMSTART    .EQU $f800
+ROMSTART    .EQU $f800
+RAMSTART    .EQU $0000
+
+        .ORG PGMSTART
+        lds  #$07ff
+        jsr  InitialiseSerial
+
+loop:   ldaa  #'a'
+        jsr   TxChar
+loop2   ldab  #$ff
+loop1:  decb           
+        bne   loop1
+        bra   loop2
+
+.include "Char-6850.a68"
+
+        .ORG  $fffe
+        .DW   PGMSTART
+        .end

@@ -1,0 +1,96 @@
+; *************************************************************************
+;
+;       MINT Minimal Interpreter for the 6800 
+;
+;       Ken Boak, John Hardy and Craig Jones. 
+;
+;       GNU GENERAL PUBLIC LICENSE                   Version 3, 29 June 2007
+;
+;       see the LICENSE file in this repo for more information 
+;
+; *****************************************************************************
+
+;
+; 6850 ACIA registers
+;----------------------
+CONTROL         .EQU      $8000   ;(write) 
+STATUS          .EQU      $8000   ;(read)
+TDR             .EQU      $8001   ;(write)
+RDR             .EQU      $8001   ;(read)
+;
+; control register bits
+;----------------------
+;
+;clock divisor
+;
+MRESET      .EQU  $03        ;master reset the ACIA
+CLKDIV_0    .EQU  $00        ;CLOCK/1
+CLKDIV_16   .EQU  $01        ;CLOCK/16
+CLKDIV_64   .EQU  $02        ;CLOCK/64
+;
+; format select
+;
+F7E2    .EQU   $00        ;7 data bits, EVEN parity, 2 stop bits (1+7+1+2= 11 bits)
+F7O2    .EQU   $04        ;7 data bits, ODD parity, 2 stop bits (1+7+1+2= 11 bits)
+F7E1    .EQU   $08        ;7 data bits, EVEN parity, 1 stop bit (1+7+1+1= 10 bits)
+F7O1    .EQU   $0C        ;7 data bits, ODD parity, 1 stop bit (1+7+1+1= 10 bits)
+F8N2    .EQU   $10        ;8 data bits, NO parity, 2 stop bits (1+8+0+2= 11 bits)
+F8N1    .EQU   $14        ;8 data bits, NO parity, 1 stop bit (1+8+0+1= 10 bits)
+F8E1    .EQU   $18        ;8 data bits, EVEN parity, 1 stop bit (1+8+1+1= 11 bits)
+F8O1    .EQU   $1C        ;8 data bits, ODD parity,1 stop bit (1+8+1+1= 11 bits)
+        ;
+        ; transmitter control
+        ;
+RTSLID .EQU   $00        ;RTS LOW, transmit interrupt disabled
+RTSLIE .EQU   $20        ;RTS LOW, transmit interrupt enabled
+RTSHID .EQU   $40        ;RTS HIGH, transmit interrupt disabled
+RTSLIDB .EQU  $60        ;RTS LOW, transmit interrupt disabled and 'break' transmitted
+        ;
+        ; receiver interrupt
+        ;
+RIE    .EQU   $80        ;receiver interrupt enabled
+        ;
+        ; status register bits
+        ;---------------------
+RDRF   .EQU   1          ;receive data register full
+TDRE   .EQU   2          ;transmit data register empty
+DCD    .EQU   4          ;data carrier detect
+CTS    .EQU   8          ;clear to send
+FE     .EQU   16          ;framing error
+OVRN   .EQU   32         ;overrun
+PE     .EQU   64         ;parity error
+IRQ    .EQU   128         ;interrupt request
+;
+; initialise ACIA
+;----------------
+InitialiseSerial:        
+        ldaa   #MRESET
+        staa   CONTROL           ;reset the ACIA
+        NOP
+        NOP
+        NOP
+;initialise ACIA  8 bit word, No parity 2 stop divide by 64 for 115200 baud
+        ldaa   #RTSLID+F8N2+CLKDIV_64
+        staa   CONTROL       
+        Rts
+;
+; transmit a character in a
+;--------------------------
+TxChar:  
+        psha                        ;save the character for later
+TxChar1: 
+        ldaa  STATUS                ;get the ACIA status
+        anda  #TDRE                  ;bit  TDRE,a is the TDRE bit high?
+        beq   TxChar1               ;no, the TDR is not empty
+        pula                        ;yes, get the character back
+        staa  TDR                   ;and put it in the TDR
+        rts
+;
+; receive  a character in a
+;---------------------------------
+RxChar:  
+        ldaa  STATUS             ;get the ACIA status
+        anda  #RDRF               ;bit   RDRF,a is the RDRF bit high?
+        beq   RxChar             ;no, the RDR is empty
+        ldaa  RDR                ;yes, read the received char
+        rts
