@@ -21,10 +21,13 @@ RAMSTART    .EQU $0000
         lds  #$07ff
         jsr  InitialiseSerial
 
+;        jmp   echo
+
+
 loop    lda   #'a'
         jsr   TxChar
         
-;Delay so we don't fill screen
+;Delay so we don't fill screen too fast
 
         lda   #$ff
 loop2   ldb   #$ff
@@ -33,6 +36,10 @@ loop1   decb
         deca
         bne   loop2
         bra   loop          ;Done the delay, send another char
+        
+echo    jsr  RxChar
+        jsr  Txchar
+        bra  echo   
 
 .include "Char-6850.a09"
 
